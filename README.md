@@ -28,62 +28,66 @@
 
 ```text
 project/
-├─ data/                         # 데이터 단계별 관리
-│  ├─ 00_raw/                    # 원본 데이터(절대 수정 금지)
-│  ├─ 01_interim/                # 전처리 중간 산출물
-│  └─ 02_processed/              # 모델 입력용 최종 데이터
+├─ data/                      # 데이터 단계별 관리(원본/중간/최종)
+│  ├─ 00_raw/
+│  ├─ 01_interim/
+│  └─ 02_processed/
 │
-├─ notebooks/                    # 개인 작업 공간
-│  ├─ 00_ingestion/                 # 수집/적재 실험(API, 크롤링, DB)
-│  ├─ 01_preprocessing/             # 전처리 실험(결측/이상치/인코딩/스케일링)
-│  ├─ 02_features/                  # 피처 엔지니어링 실험
-│  ├─ 03_models/                    # 모델링 실험(ML/DL 구조/베이스라인)
-│  ├─ 04_training/                  # 학습/평가 실험(검증전략, metric, 튜닝)
-│  └─ 99_sandbox/                   # 기타작업
+├─ notebooks/                 # 개인 실험/탐색용(재현 로직은 src로 이전 권장)
+│  ├─ 00_ingestion/
+│  ├─ 01_preprocessing/
+│  ├─ 02_features/
+│  ├─ 03_models/
+│  ├─ 04_training/
+│  └─ 99_sandbox/
 │
-├─ src/                          # 팀 공용 코드(재현 가능한 로직)
-│  ├─ 01_common/                    # 경로/seed/logger 등 공통 유틸
-│  ├─ 02_ingestion/                 # 데이터 수집(API/크롤링/DB/적재)
-│  ├─ 03_preprocessing/             # 결측/이상치/인코딩/스케일링/분할
-│  ├─ 04_features/                  # 피처 엔지니어링/선택
-│  ├─ 05_models/                    # 모델 정의(ML/DL)
-│  ├─ 06_training/                  # 학습/평가 루프
-│  ├─ 07_inference/                 # 추론/제출 생성
-│  └─ 08_visualization/             # 공용 시각화 함수
+├─ src/                       # 팀 공용 핵심 로직(테스트/재사용/재현 가능한 코드)
+│  ├─ common/                 # 경로/seed/logger/config 로더 등 공통
+│  ├─ data/                   # [대분류] 데이터
+│  │  ├─ ingestion/           # 수집/적재
+│  │  ├─ preprocessing/       # 전처리/분할/피쳐
+│  │  └─ io/                  # read/write, 포맷 핸들링
+│  ├─ model/                  # [대분류] 모델
+│  │  ├─ architectures/       # 모델 정의
+│  │  ├─ training/            # 학습/평가/튜닝
+│  │  ├─ inference/           # 추론/후처리
+│  │  └─ registry/            # save/load, 버전/아티팩트 관리
+│  └─ front/                  # [대분류] 프론트(Streamlit 전용)
+│     ├─ ui/                  # 공용 UI 컴포넌트(사이드바/폼 등)
+│     ├─ views/               # 화면 단위 렌더 함수(페이지가 호출)
+│     ├─ state/               # session_state 관리
+│     └─ viz/                 # 시각화 래퍼
+│     
 │
-├─ scripts/                      # 실행 엔트리(정답 실행 경로)
+├─ scripts/                   # CLI 실행 엔트리(배치/파이프라인 “정답 실행 경로”)
 │  ├─ 01_fetch_data.py
 │  ├─ 02_make_dataset.py
 │  ├─ 03_build_features.py
 │  ├─ 04_train.py
-│  ├─ 05_evaluate.py
-│  └─ 06_infer.py
+│  └─ 05_infer.py
 │
-├─ configs/                      # 실험/파이프라인 설정 파일
-│  ├─ 01_data.yaml
-│  ├─ 02_features.yaml
-│  ├─ 03_train.yaml
-│  ├─ 04_infer.yaml
-│  └─ 05_logging.yaml
+├─ configs/                   # 설정 파일 모음(yaml 등)
 │
-├─ artifacts/                    # 모델/전처리기/메트릭 등 산출물(기본 git 제외 권장)
-│  ├─ 01_models/
-│  ├─ 02_preprocessors/
-│  └─ 03_metrics/
+├─ artifacts/                 # 모델/전처리기/지표 등 산출물 저장소(기본 git 제외 권장)
+│  ├─ models/
+│  ├─ preprocessors/
+│  └─ metrics/
 │
-├─ reports/                      # 최종 리포트/이미지/표
-│  ├─ figures/
-│  └─ final_report.md
+├─ runs/                      # 실험 로그/결과(MLflow/CSV/메트릭 스냅샷 등, 기본 git 제외 권장)
 │
-├─ runs/                         # 실험 로그/실험 결과(기본 git 제외 권장)
+├─ tests/                     # 단위/통합 테스트(전처리/피처/스키마/유스케이스 등)
 │
-├─ tests/                        # 전처리/피처/스키마 테스트
+├── app.py                    # Streamlit 메인 진입점(streamlit run app.py)
+├── pages/                    # Streamlit 페이지(얇게 유지: 입력/버튼/표시 + src.front 호출)
+│   ├── 01_Data_Analysis.py
+│   ├── 02_Price_Prediction.py
+│   └── 03_Intro.py
 │
-├─ requirements.txt
-├─ .env.example                  # 환경변수 샘플(실제 .env는 커밋 금지)
-├─ LICENSE
-├─ .gitignore
-└─ README.md
+├─ requirements.txt           # 파이썬 의존성 목록
+├─ .env.example               # 환경변수 샘플(실제 .env는 커밋 금지)
+├─ LICENSE                    # 라이선스
+├─ .gitignore                 # git 제외 규칙
+└─ README.md                  # 프로젝트 사용법/규칙/실행 가이드
 ```
 ## 작업 방식
 ### 1) 개인 작업(노트북)
