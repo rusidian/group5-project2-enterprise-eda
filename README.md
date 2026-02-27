@@ -1,6 +1,5 @@
 # group5-project2-enterprise-eda
-기업 데이터를 활용해 주요 패턴, 핵심 요인, 인사이트를 도출하는 탐색적 데이터 분석(EDA) 프로젝트.
-
+기업 데이터 기반 EDA → 피처 엔지니어링 → ML/DL 모델링 → 예측/평가
 
 ## 팀원
 
@@ -29,22 +28,97 @@
 
 ```text
 project/
-|
-├── data/
-├── KimMinHa/
-├── JangHanJae/
-├── BaeJaeHyun/
-├── JeonYoonHa/
-├── JungDaSol/
-├── LeeChangWoo/
-├── requirements.txt
-├── LICENSE
-├── .gitignore
-└── README.md
+├─ data/                         # 데이터 단계별 관리
+│  ├─ 00_raw/                    # 원본 데이터(절대 수정 금지)
+│  ├─ 01_interim/                # 전처리 중간 산출물
+│  └─ 02_processed/              # 모델 입력용 최종 데이터
+│
+├─ notebooks/                    # 개인 작업 공간
+│  ├─ 00_ingestion/                 # 수집/적재 실험(API, 크롤링, DB)
+│  ├─ 01_preprocessing/             # 전처리 실험(결측/이상치/인코딩/스케일링)
+│  ├─ 02_features/                  # 피처 엔지니어링 실험
+│  ├─ 03_models/                    # 모델링 실험(ML/DL 구조/베이스라인)
+│  ├─ 04_training/                  # 학습/평가 실험(검증전략, metric, 튜닝)
+│  └─ 99_sandbox/                   # 기타작업
+│
+├─ src/                          # 팀 공용 코드(재현 가능한 로직)
+│  ├─ 01_common/                    # 경로/seed/logger 등 공통 유틸
+│  ├─ 02_ingestion/                 # 데이터 수집(API/크롤링/DB/적재)
+│  ├─ 03_preprocessing/             # 결측/이상치/인코딩/스케일링/분할
+│  ├─ 04_features/                  # 피처 엔지니어링/선택
+│  ├─ 05_models/                    # 모델 정의(ML/DL)
+│  ├─ 06_training/                  # 학습/평가 루프
+│  ├─ 07_inference/                 # 추론/제출 생성
+│  └─ 08_visualization/             # 공용 시각화 함수
+│
+├─ scripts/                      # 실행 엔트리(정답 실행 경로)
+│  ├─ 01_fetch_data.py
+│  ├─ 02_make_dataset.py
+│  ├─ 03_build_features.py
+│  ├─ 04_train.py
+│  ├─ 05_evaluate.py
+│  └─ 06_infer.py
+│
+├─ configs/                      # 실험/파이프라인 설정 파일
+│  ├─ 01_data.yaml
+│  ├─ 02_features.yaml
+│  ├─ 03_train.yaml
+│  ├─ 04_infer.yaml
+│  └─ 05_logging.yaml
+│
+├─ artifacts/                    # 모델/전처리기/메트릭 등 산출물(기본 git 제외 권장)
+│  ├─ 01_models/
+│  ├─ 02_preprocessors/
+│  └─ 03_metrics/
+│
+├─ reports/                      # 최종 리포트/이미지/표
+│  ├─ figures/
+│  └─ final_report.md
+│
+├─ runs/                         # 실험 로그/실험 결과(기본 git 제외 권장)
+│
+├─ tests/                        # 전처리/피처/스키마 테스트
+│
+├─ requirements.txt
+├─ .env.example                  # 환경변수 샘플(실제 .env는 커밋 금지)
+├─ LICENSE
+├─ .gitignore
+└─ README.md
 ```
 ## 작업 방식
-- PyCharm 프로젝트는 **프로젝트 폴더의 루트 경로(project/)** 로 열어서 작업합니다.
-- 개인 작업 공간(본인 폴더)에는 **`.md`와 `.ipynb`만** 두도록 합니다.
+### 1) 개인 작업(노트북)
+- 개인 작업은 `notebooks/`에서만 진행합니다.
+- 노트북 파일명은 **작성자 + 주제**로 통일합니다.  
+  - 예: `notebooks/00_ingestion/hanjae_eda_baseline.ipynb`
+- 노트북에는 **EDA/실험 과정, 모델링 시도, 결론/인사이트/검증 결과**를 기록합니다.
+  - 다만, 반복 사용하거나 파이프라인에 포함될 로직(전처리/피처 생성/학습·평가/추론)은 함수·클래스로 정리해 `src/`로 옮깁니다.
+
+### 2) 팀 공용 코드(`src/`)
+- 전처리/피처/학습/추론 로직은 함수/클래스로 모듈화해서 `src/`에 구현합니다.
+- 공용 로직은 PR 리뷰를 통해 품질을 유지합니다.
+
+### 3) 실행(정답 경로 = `scripts/`)
+- 파이프라인 실행은 `scripts/`만 사용합니다.
+- 실행 순서 예시:
+  ```bash
+  python scripts/01_fetch_data.py --config configs/data.yaml
+  python scripts/02_make_dataset.py --config configs/data.yaml
+  python scripts/03_build_features.py --config configs/features.yaml
+  python scripts/04_train.py --config configs/train.yaml
+  python scripts/05_evaluate.py --config configs/train.yaml
+  python scripts/06_infer.py --config configs/infer.yaml
+  ```
+  
+### 4) 산출물 관리
+- `data/00_raw`: 원본 데이터(수정 금지)
+- `artifacts/`: 모델/스케일러/인코더/토크나이저/메트릭
+- `reports/`: 최종 결과(리포트, 이미지, 표)
+- `.env`, API Key, 개인정보 포함 데이터는 **절대 커밋 금지**
+- `artifacts/`, `runs/`는 기본적으로 `.gitignore` 대상입니다.  
+  - 용량이 큰 파일(모델 체크포인트/로그 등)로 레포가 비대해지는 것을 방지합니다.
+- **최종 모델/전처리기(및 필요한 산출물)는 Git에 커밋하지 않고**, 외부 저장소(예: Drive/S3/Release/W&B/MLflow 등)에 업로드하여 공유합니다.
+- Git에는 **최종 결과 요약과 재현 정보만** `reports/`에 정리하여 커밋합니다.  
+  - 예: 최종 점수/지표, 사용한 config 이름(또는 스냅샷), run/experiment ID, 외부 저장소 링크(또는 파일 식별자)
 
 ---
 
@@ -107,7 +181,7 @@ Conventional Commits의 `scope`는
 - `eda` : EDA 분석 코드, 통계/패턴 분석
 - `viz` : 시각화(플롯, 차트 함수, 스타일)
 - `feature` : 피처 엔지니어링/파생변수 생성
-- `model` : 모델링/학습/평가 코드(필요 시)
+- `model` : 모델링/학습/평가 코드
 - `report` : 결과 리포트/결과 정리(노트북 결과 포함)
 - `config` : 설정 파일, 경로, 환경 변수 등
 - `deps` : 라이브러리/requirements 등 의존성
